@@ -175,6 +175,21 @@
     setText(flagEcho, flags);
     syncFlagButtons();
 
+    /* An empty pattern matches at every position: technically 276 zero-length
+       matches on the default text, and as a reset gesture that is hostile.
+       Clearing the field is an idle state, not a question. */
+    if (source === '') {
+      clearTimeout(timer);
+      pendingSeq = -1;
+      unanswered.length = 0;
+      lastApplied = s;
+      showError(null);
+      paint({ ranges: [], groups: [] });
+      countEl.className = 'count-line';
+      setText(countEl, 'No pattern yet. Type one, or click a cheat-sheet entry.');
+      return;
+    }
+
     if (text.length >= MAX_TEXT) {
       // Nothing is posted, so nothing is pending: disarm like every other path.
       clearTimeout(timer);
