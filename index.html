@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>regex-lab — live JavaScript regex tester</title>
+<meta name="description" content="A live tester for JavaScript regular expressions: type a pattern, watch the matches light up in your test string as you type.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <h1>regex-lab</h1>
+  <p class="tagline">Type a pattern, watch it match. JavaScript <code>RegExp</code>, nothing else.</p>
+</header>
+
+<div class="layout">
+
+  <main class="tester">
+
+    <section class="pane" aria-labelledby="pattern-label">
+      <div class="pane-head">
+        <label id="pattern-label" for="pattern">Pattern</label>
+        <span class="hint">bare source — no surrounding slashes</span>
+      </div>
+      <div class="pattern-row">
+        <span class="delim" aria-hidden="true">/</span>
+        <input id="pattern" class="pattern-input" type="text" spellcheck="false"
+               autocomplete="off" autocapitalize="off" autocorrect="off"
+               aria-invalid="false" aria-describedby="pattern-error">
+        <span class="delim" aria-hidden="true">/<span id="flag-echo"></span></span>
+      </div>
+      <p id="pattern-error" class="error-line" role="alert" hidden></p>
+      <fieldset class="flags">
+        <legend>Flags</legend>
+        <label class="flag"><input type="checkbox" data-flag="g"><code>g</code><span>global</span></label>
+        <label class="flag"><input type="checkbox" data-flag="i"><code>i</code><span>ignore case</span></label>
+        <label class="flag"><input type="checkbox" data-flag="m"><code>m</code><span>multiline</span></label>
+        <label class="flag"><input type="checkbox" data-flag="s"><code>s</code><span>dot matches newline</span></label>
+        <label class="flag"><input type="checkbox" data-flag="u"><code>u</code><span>unicode</span></label>
+        <label class="flag"><input type="checkbox" data-flag="y"><code>y</code><span>sticky</span></label>
+      </fieldset>
+      <p id="notice" class="notice" hidden></p>
+    </section>
+
+    <section class="pane" aria-labelledby="test-label">
+      <div class="pane-head">
+        <label id="test-label" for="test-input">Test string</label>
+        <span class="hint">matches are highlighted in place</span>
+      </div>
+      <div class="editor" id="editor">
+        <pre id="highlight" aria-hidden="true"></pre>
+        <textarea id="test-input" spellcheck="false" autocomplete="off"
+                  autocapitalize="off" autocorrect="off" wrap="soft"></textarea>
+      </div>
+    </section>
+
+    <section class="pane" aria-labelledby="matches-label">
+      <div class="pane-head">
+        <h2 id="matches-label">Matches</h2>
+      </div>
+      <p id="count-line" class="count-line" role="status" aria-live="polite"></p>
+      <ol id="match-list" class="match-list"></ol>
+    </section>
+
+  </main>
+
+  <details class="cheat" id="cheat">
+    <summary id="cheat-summary">Cheat sheet</summary>
+    <div class="cheat-body" id="cheat-body"></div>
+  </details>
+
+</div>
+
+<footer class="site-foot">
+  <p>Everything runs in this tab. No network calls, nothing stored.</p>
+</footer>
+
+<!-- match-worker.js is loaded twice on purpose: once here, so its matcher can
+     run on the main thread when Worker construction fails (file://), and once
+     by new Worker() in app.js. One matcher, one source of truth. -->
+<script src="match-worker.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

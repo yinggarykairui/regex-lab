@@ -1,0 +1,382 @@
+/* regex-lab — layout and type. No framework, no web font. */
+
+:root {
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* The overlay only lines up if the <pre> and the <textarea> agree on every
+     one of these. Change them here, never on one of the two elements. */
+  --edit-size: 1rem;          /* 16px: also keeps iOS from zooming on focus */
+  --edit-line: 1.55;
+  --edit-pad: 0.6rem;
+  --edit-border: 1px;
+
+  --bg: #fbfbfa;
+  --panel: #ffffff;
+  --ink: #1a1a1a;
+  --ink-soft: #55595e;
+  --rule: #d9d7d2;
+  --rule-strong: #b3b0a9;
+  --accent: #2f5d9e;
+  --danger: #a32020;
+  --mark-a: #ffe08a;
+  --mark-b: #b9e3c6;
+  --caret-mark: #d2691e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16181a;
+    --panel: #1e2124;
+    --ink: #e9e7e3;
+    --ink-soft: #a3a8ae;
+    --rule: #33383d;
+    --rule-strong: #4d545b;
+    --accent: #8ab4f8;
+    --danger: #f08a8a;
+    --mark-a: #6b5518;
+    --mark-b: #24503a;
+    --caret-mark: #e8955a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  padding: 1rem;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.site-head { margin: 0 auto 1rem; max-width: 1100px; }
+.site-head h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+  font-family: var(--mono);
+}
+.tagline { margin: 0.2rem 0 0; color: var(--ink-soft); font-size: 0.9rem; }
+.tagline code { font-family: var(--mono); }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+.tester { display: grid; gap: 1rem; min-width: 0; }
+
+.pane {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.85rem;
+  min-width: 0;
+}
+
+.pane-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.pane-head label, .pane-head h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.hint { color: var(--ink-soft); font-size: 0.8rem; }
+
+/* --- pattern field ------------------------------------------------------ */
+
+.pattern-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  font-family: var(--mono);
+}
+.delim {
+  color: var(--rule-strong);
+  font-family: var(--mono);
+  font-size: 1rem;
+  align-self: center;
+  white-space: nowrap;
+}
+#flag-echo { color: var(--accent); }
+
+.pattern-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+}
+.pattern-input:focus-visible,
+.pattern-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pattern-input[aria-invalid="true"] {
+  border-color: var(--danger);
+  border-width: 2px;
+}
+
+.error-line {
+  margin: 0.5rem 0 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+.error-line .engine {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+.notice {
+  margin: 0.5rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  border-left: 3px solid var(--rule-strong);
+  padding-left: 0.5rem;
+}
+
+.flags {
+  margin: 0.65rem 0 0;
+  padding: 0.4rem 0.5rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.65rem;
+}
+.flags legend { font-size: 0.8rem; color: var(--ink-soft); padding: 0 0.25rem; }
+.flag {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 40px;
+  padding: 0 0.15rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.flag input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.flag code { font-family: var(--mono); font-weight: 600; }
+.flag span { color: var(--ink-soft); }
+
+/* --- test string + highlight overlay ------------------------------------ */
+
+.editor {
+  position: relative;
+  height: 15rem;
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.editor:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Every property below must stay identical on both elements. */
+#highlight,
+#test-input {
+  margin: 0;
+  padding: var(--edit-pad);
+  border: var(--edit-border) solid transparent;
+  font-family: var(--mono);
+  font-size: var(--edit-size);
+  line-height: var(--edit-line);
+  letter-spacing: 0;
+  word-spacing: 0;
+  font-variant-ligatures: none;
+  font-kerning: none;
+  text-align: left;
+  text-indent: 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  tab-size: 4;
+  -moz-tab-size: 4;
+  box-sizing: border-box;
+  background: transparent;
+}
+
+#highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: transparent;   /* the <pre> paints marks only; the textarea paints text */
+  pointer-events: none;
+  user-select: none;
+}
+
+#test-input {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+  caret-color: var(--accent);
+  resize: none;         /* resizing would desync the overlay */
+  overflow: auto;
+  outline: none;
+}
+
+#highlight mark {
+  color: transparent;
+  border-radius: 2px;
+  background: var(--mark-a);
+}
+#highlight mark.alt { background: var(--mark-b); }
+#highlight mark.zero {
+  position: relative;
+  background: transparent;
+}
+#highlight mark.zero::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 0;
+  width: 2px;
+  height: 1.2em;
+  background: var(--caret-mark);
+}
+
+/* --- match list --------------------------------------------------------- */
+
+.count-line { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--ink-soft); }
+.count-line.capped { color: var(--danger); }
+
+.match-list { margin: 0; padding: 0; list-style: none; }
+.match-row {
+  border-top: 1px solid var(--rule);
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.2rem 0.6rem;
+}
+.match-row .at {
+  font-family: var(--mono);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.match-row .text {
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.match-row .empty { color: var(--ink-soft); font-style: italic; font-family: var(--sans); }
+.match-row .groups {
+  grid-column: 2;
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 0.5rem;
+  font-size: 0.8rem;
+}
+.match-row .groups dt { font-family: var(--mono); color: var(--ink-soft); }
+.match-row .groups dd {
+  margin: 0;
+  font-family: var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.match-row .groups .undef { color: var(--ink-soft); font-style: italic; font-family: var(--sans); }
+
+/* --- cheat sheet -------------------------------------------------------- */
+
+.cheat {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  min-width: 0;
+}
+.cheat > summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 0.85rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.cheat-body { padding: 0 0.85rem 0.85rem; }
+
+.cheat-group { margin: 0 0 0.85rem; border: 0; padding: 0; }
+.cheat-group:last-child { margin-bottom: 0; }
+.cheat-group h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+.cheat-list { display: grid; gap: 0.25rem; }
+
+.cheat-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cheat-entry:hover { border-color: var(--rule-strong); }
+.cheat-entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.cheat-entry .token {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  min-width: 3.6em;
+}
+.cheat-entry .gloss { color: var(--ink-soft); min-width: 0; }
+.cheat-entry[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.site-foot {
+  max-width: 1100px;
+  margin: 1rem auto 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+.site-foot p { margin: 0; }
+
+/* --- two columns above 720px -------------------------------------------- */
+
+@media (min-width: 720px) {
+  body { padding: 1.5rem; }
+  .layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 1.25rem; }
+  .cheat > summary { cursor: default; list-style: none; }
+  .cheat > summary::-webkit-details-marker { display: none; }
+  .editor { height: 18rem; }
+}
