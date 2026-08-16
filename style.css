@@ -1,6 +1,12 @@
 /* regex-lab — layout and type. No framework, no web font. */
 
 :root {
+  /* Tell the UA which palette its own controls are painted for. Without it the
+     unchecked flag checkboxes rendered #ffffff on the #1e2124 panel — 16.18:1,
+     the brightest objects on a dark page, reading as the selected ones — and
+     the UA focus ring stayed the light-mode ring at 1.18:1. */
+  color-scheme: light dark;
+
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 
@@ -138,8 +144,17 @@ body.two-col .layout {
   border-radius: 4px;
   padding: 0.4rem 0.5rem;
 }
+/* One deliberate ring on every focusable thing, in both schemes: the six flag
+   checkboxes and the cheat summary used to fall back to the UA ring. */
+.pattern-input:focus,
 .pattern-input:focus-visible,
-.pattern-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.flag input:focus-visible,
+.cheat > summary:focus-visible,
+.cheat-entry:focus-visible,
+.error-line:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 .pattern-input[aria-invalid="true"] {
   border-color: var(--danger);
   border-width: 2px;
@@ -406,7 +421,6 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
   cursor: pointer;
 }
 .cheat-entry:hover { border-color: var(--rule-strong); }
-.cheat-entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .cheat-entry .token {
   font-family: var(--mono);
   font-size: 0.85rem;
