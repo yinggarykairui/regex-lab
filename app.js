@@ -200,6 +200,7 @@
     showError(null);
     paint(res);
     renderCount(res);
+    renderList(res);
   }
 
   function renderCount(res) {
@@ -242,6 +243,7 @@
   function paint(res) {
     var text = ta.value;
     var ranges = res.ranges || [];
+    listEl.textContent = '';
     var frag = document.createDocumentFragment();
     var at = 0;
 
@@ -272,6 +274,79 @@
     pre.appendChild(frag);
     syncMetrics();
     syncScroll();
+  }
+
+  /* --- the match list ----------------------------------------------------- */
+
+  var MAX_ROWS = 100;       // matches the worker's cap on returned capture groups
+  var MAX_ROW_CHARS = 200;  // one match can be the whole test string
+
+  function clip(s) {
+    return s.length > MAX_ROW_CHARS ? s.slice(0, MAX_ROW_CHARS) + '…' : s;
+  }
+
+  function muted(word) {
+    var span = document.createElement('span');
+    span.className = 'undef';
+    span.textContent = word;
+    return span;
+  }
+
+  function addPair(dl, name, value) {
+    var dt = document.createElement('dt');
+    dt.textContent = name;
+    var dd = document.createElement('dd');
+    if (value === null) dd.appendChild(muted('undefined'));
+    else if (value === '') dd.appendChild(muted('empty string'));
+    else dd.textContent = clip(value);
+    dl.appendChild(dt);
+    dl.appendChild(dd);
+  }
+
+  function renderList(res) {
+    var text = ta.value;
+    var ranges = res.ranges || [];
+    var groups = res.groups || [];
+    var rows = Math.min(ranges.length, MAX_ROWS);
+    var frag = document.createDocumentFragment();
+
+    for (var i = 0; i < rows; i++) {
+      var start = ranges[i][0];
+      var end = ranges[i][1];
+
+      var li = document.createElement('li');
+      li.className = 'match-row';
+
+      var at = document.createElement('span');
+      at.className = 'at';
+      at.textContent = '#' + i + ' at ' + start;
+      li.appendChild(at);
+
+      var txt = document.createElement('span');
+      txt.className = 'text';
+      if (end === start) {
+        var em = document.createElement('span');
+        em.className = 'empty';
+        em.textContent = 'zero-length match';
+        txt.appendChild(em);
+      } else {
+        txt.textContent = clip(text.slice(start, end));
+      }
+      li.appendChild(txt);
+
+      var g = groups[i];
+      var named = (g && g.named) || [];
+      if (g && (g.numbered.length || named.length)) {
+        var dl = document.createElement('dl');
+        dl.className = 'groups';
+        for (var k = 0; k < g.numbered.length; k++) addPair(dl, '$' + (k + 1), g.numbered[k]);
+        for (var j = 0; j < named.length; j++) addPair(dl, '?<' + named[j][0] + '>', named[j][1]);
+        li.appendChild(dl);
+      }
+
+      frag.appendChild(li);
+    }
+    listEl.appendChild(frag);
   }
 
   /* --- wiring ------------------------------------------------------------ */
