@@ -450,8 +450,30 @@
     }
   }
 
+  /* Inserting must not move the page. focus({preventScroll}) covers the focus
+     call; the caret-into-view scroll that the insertion itself performs is not
+     preventable, so put the page back before the frame is drawn — the restore
+     is in the same task as the insertion, so nothing is ever painted scrolled. */
+  function keepingPagePut(fn) {
+    var x = window.scrollX;
+    var y = window.scrollY;
+    fn();
+    if (window.scrollX !== x || window.scrollY !== y) window.scrollTo(x, y);
+  }
+
+  /* preventScroll matters: the sheet sits at the bottom of the page on a phone
+     and beside a scrolled page on a desktop, and a plain focus() scrolls the
+     pattern field into view — which reads as the page jumping to the top. */
+  function focusPatternOnly() {
+    try {
+      patternEl.focus({ preventScroll: true });
+    } catch (err) {
+      patternEl.focus();
+    }
+  }
+
   function focusPattern(pos) {
-    patternEl.focus();
+    focusPatternOnly();
     try { patternEl.setSelectionRange(pos, pos); } catch (e) { /* not selectable */ }
     caretStart = caretEnd = pos;
   }
@@ -461,6 +483,26 @@
     var s = Math.min(caretStart, v.length);
     var e = Math.min(caretEnd, v.length);
     if (e < s) { var swap = s; s = e; e = swap; }
+
+    focusPatternOnly();
+    try { patternEl.setSelectionRange(s, e); } catch (err) { /* not selectable */ }
+
+    /* execCommand is deprecated but it is the only insertion that joins the
+       field's own undo stack: one Ctrl+Z then takes the token back out instead
+       of stepping outside the history and replaying the default pattern.
+       It returns false where it is unsupported, so the direct write stays. */
+    var native = false;
+    try {
+      native = document.execCommand('insertText', false, token);
+    } catch (err) {
+      native = false;
+    }
+    if (native) {
+      // The insertion fired `input`, which already re-ran the match and
+      // remembered the caret it left behind.
+      return;
+    }
+
     patternEl.value = v.slice(0, s) + token + v.slice(e);
     focusPattern(s + token.length);
     run();
@@ -544,8 +586,10 @@
       var btn = ev.target.closest('.cheat-entry');
       if (!btn) return;
       var flag = btn.getAttribute('data-flag');
-      if (flag) toggleFlag(flag);
-      else insertToken(btn.getAttribute('data-token'));
+      keepingPagePut(function () {
+        if (flag) toggleFlag(flag);
+        else insertToken(btn.getAttribute('data-token'));
+      });
     });
   }
 
