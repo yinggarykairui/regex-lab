@@ -36,7 +36,7 @@
   var lastApplied = -1;   // newest seq painted; an older reply never overwrites it
   var timer = null;
   var worker = null;
-  var workerAvailable = true;
+  var retried = false;    // one re-issue per timeout, never a loop
 
   /* --- small helpers ----------------------------------------------------- */
 
@@ -95,7 +95,6 @@
       worker = new Worker(WORKER_URL);
     } catch (err) {
       worker = null;
-      workerAvailable = false;
       return false;
     }
     worker.onmessage = onWorkerMessage;
@@ -107,7 +106,6 @@
     // The worker script failed to load or threw at the top level. Stop trusting
     // it and match on the page instead, rather than going silent.
     if (worker) { worker.terminate(); worker = null; }
-    workerAvailable = false;
     clearTimeout(timer);
     pendingSeq = -1;
     showNotice(FALLBACK_NOTICE);
@@ -130,15 +128,28 @@
     if (worker) { worker.terminate(); worker = null; }
     pendingSeq = -1;
     lastApplied = forSeq;
+    showError(null);
     paint({ ranges: [], groups: [] });
     countEl.className = 'count-line capped';
     setText(countEl, 'Pattern took longer than 400 ms and was stopped.');
     spawnWorker();   // fresh worker, so the next keystroke works
+
+    /* terminate() also threw away anything queued behind the run that hung, and
+       the newest of those may be a perfectly fast pattern the user has already
+       typed. Re-issue the current state once. If that times out too, the
+       pattern on screen really is the slow one and the message above stands. */
+    if (!retried) {
+      retried = true;
+      run(true);
+    }
   }
 
   /* --- running a match --------------------------------------------------- */
 
-  function run() {
+  /* isRetry is true only for the one re-issue after a timeout; anything the
+     user does gets a fresh retry budget. */
+  function run(isRetry) {
+    if (isRetry !== true) retried = false;
     var s = ++seq;
     var source = patternEl.value;
     var flags = currentFlags();
@@ -147,7 +158,7 @@
     setText(flagEcho, flags);
     syncFlagButtons();
 
-    if (text.length > MAX_TEXT) {
+    if (text.length >= MAX_TEXT) {
       lastApplied = s;
       showError(null);
       apply({ seq: s, ranges: [], groups: [], error: null, truncated: false,
@@ -186,7 +197,7 @@
       paint({ ranges: [], groups: [] });
       countEl.className = 'count-line capped';
       setText(countEl, 'Test string is ' + ta.value.length.toLocaleString() +
-        ' characters — over the 50,000-character cap, so it was not matched.');
+        ' characters. The 50,000-character cap means it was not matched.');
       return;
     }
 

@@ -55,7 +55,7 @@
   function regexLabMatch(source, flags, text) {
     var out = { ranges: [], groups: [], error: null, truncated: false, total: 0, tooLong: false };
     text = typeof text === 'string' ? text : '';
-    if (text.length > MAX_TEXT) {
+    if (text.length >= MAX_TEXT) {
       out.tooLong = true;
       return out;
     }
