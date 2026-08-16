@@ -634,11 +634,47 @@
     });
   }
 
-  /* Above 720px the sheet is a sidebar, not something to open and close. */
-  function syncCheatOpen() {
-    cheatEl.open = wide.matches;
+  /* --- which arrangement, measured ---------------------------------------- */
+
+  /* Two columns buy the tester a sidebar and cost it a column of width; one
+     column costs the editor its height. Which one leaves the test-string box
+     bigger is a question with an answer at every window size, so lay out both
+     and keep the larger, rather than naming a width and hoping. A media query
+     here would be a guess evaluated at the two sizes it was written for — and
+     that is exactly how the 719 -> 720 cliff got in: one pixel of window cost
+     the box 46% of its width, and it did not recover until 1023.
+
+     Two forced layouts, only when the window size actually changes. */
+  var layoutEl = document.querySelector('.layout');
+  var editorEl = document.getElementById('editor');
+  var sizeKey = '';
+
+  function editorArea() {
+    return editorEl.clientWidth * editorEl.clientHeight;
   }
-  var wide = window.matchMedia('(min-width: 720px)');
+
+  function chooseArrangement(force) {
+    var key = window.innerWidth + 'x' + window.innerHeight;
+    if (!force && key === sizeKey) return false;
+    sizeKey = key;
+
+    var was = document.body.classList.contains('two-col');
+    document.body.classList.add('two-col');
+    var two = editorArea();
+    document.body.classList.remove('two-col');
+    var one = editorArea();
+    var want = two > one;
+    document.body.classList.toggle('two-col', want);
+    return want !== was;
+  }
+
+  /* The sheet opens with the sidebar and folds with the stack — until the
+     reader says otherwise, after which their choice stands. */
+  var cheatChosenByUser = false;
+
+  function syncCheatOpen() {
+    if (!cheatChosenByUser) cheatEl.open = document.body.classList.contains('two-col');
+  }
 
   /* --- wiring ------------------------------------------------------------ */
 
@@ -650,9 +686,11 @@
     caretStart = caretEnd = patternEl.value.length;
 
     buildCheatSheet();
+    chooseArrangement(true);
     syncCheatOpen();
-    if (wide.addEventListener) wide.addEventListener('change', syncCheatOpen);
-    else wide.addListener(syncCheatOpen);
+    cheatEl.querySelector('summary').addEventListener('click', function () {
+      cheatChosenByUser = true;
+    });
 
     patternEl.addEventListener('input', run);
     ta.addEventListener('input', run);
@@ -660,7 +698,11 @@
       patternEl.addEventListener(name, rememberCaret);
     });
     ta.addEventListener('scroll', syncScroll);
-    window.addEventListener('resize', function () { syncMetrics(); syncScroll(); });
+    window.addEventListener('resize', function () {
+      if (chooseArrangement(false)) syncCheatOpen();
+      syncMetrics();
+      syncScroll();
+    });
     for (var i = 0; i < flagBoxes.length; i++) {
       flagBoxes[i].addEventListener('change', run);
     }

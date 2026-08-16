@@ -46,7 +46,7 @@ html { -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  padding: 1rem;
+  padding: 0.75rem;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
@@ -56,6 +56,7 @@ body {
 }
 
 .site-head { margin: 0 auto 1rem; max-width: 1100px; }
+body.two-col .site-head { max-width: 1380px; }
 .site-head h1 {
   margin: 0;
   font-size: 1.35rem;
@@ -72,6 +73,16 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   align-items: start;
+}
+
+/* app.js adds .two-col to <body> when it has measured the two-column
+   arrangement to give the test-string box more area than the one-column one —
+   see chooseArrangement(). The sidebar is added beside the tester rather than
+   carved out of it, so the tester column keeps its 1100px ceiling either way. */
+body.two-col .layout {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 1.25rem;
+  max-width: 1380px;
 }
 
 .tester { display: grid; gap: 1rem; min-width: 0; }
@@ -188,12 +199,15 @@ body {
 
 .editor {
   position: relative;
-  height: 15rem;
+  height: clamp(8rem, 40vh, 15rem);
   border: 1px solid var(--rule-strong);
   border-radius: 4px;
   background: var(--bg);
   overflow: hidden;
 }
+/* In two columns the cheat sheet no longer eats vertical space under the
+   tester, so the box can take more of the viewport height. */
+body.two-col .editor { height: clamp(8rem, 45vh, 18rem); }
 .editor:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* Every property below must stay identical on both elements. */
@@ -337,6 +351,9 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
   border-radius: 6px;
   min-width: 0;
 }
+/* The sheet folds at every width, so it says so at every width: pointer
+   cursor and a chevron that turns, in both states. display:flex drops the
+   native marker, so the chevron is drawn here. */
 .cheat > summary {
   display: flex;
   align-items: center;
@@ -345,7 +362,20 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
+  list-style: none;
 }
+.cheat > summary::-webkit-details-marker { display: none; }
+.cheat > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: translateY(-2px) rotate(45deg);
+}
+.cheat[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+.cheat[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 0.6rem; }
 .cheat-body { padding: 0 0.85rem 0.85rem; }
 
 .cheat-group { margin: 0 0 0.85rem; border: 0; padding: 0; }
@@ -399,29 +429,12 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
   font-size: 0.78rem;
 }
 .site-foot p { margin: 0; }
+body.two-col .site-foot { max-width: 1380px; }
 
-/* --- phone: one column, the cheat sheet folded away ---------------------- */
+/* --- narrow: type and spacing only. The arrangement is measured, not
+       guessed, so no media query switches it. ------------------------------ */
 
 @media (max-width: 719px) {
-  body { padding: 0.75rem; }
-
-  /* Four lines minimum, even in landscape where 15rem would fill the screen. */
-  .editor { height: clamp(8rem, 40vh, 15rem); }
-
-  /* summary is display:flex, which drops the disclosure triangle — draw one,
-     or the sheet reads as a dead heading. */
-  .cheat > summary::after {
-    content: "";
-    margin-left: auto;
-    width: 0.5rem;
-    height: 0.5rem;
-    border-right: 2px solid var(--ink-soft);
-    border-bottom: 2px solid var(--ink-soft);
-    transform: translateY(-2px) rotate(45deg);
-  }
-  .cheat[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
-  .cheat[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 0.6rem; }
-
   .flags { gap: 0 0.75rem; }
   .match-row .groups { padding-left: 0.5rem; }
 }
@@ -430,12 +443,10 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
   .cheat-entry .token { min-width: 3em; }
 }
 
-/* --- two columns above 720px -------------------------------------------- */
-
-@media (min-width: 720px) {
+/* By this width .layout has hit its 1380px ceiling, so the roomier page
+   padding costs the test-string box nothing. Below it, padding is area: a
+   step from 0.75rem to 1.5rem would take 24px off the box on the pixel it
+   fires, which is exactly the kind of cliff this build just removed. */
+@media (min-width: 1428px) {
   body { padding: 1.5rem; }
-  .layout { grid-template-columns: minmax(0, 1fr) 260px; gap: 1.25rem; }
-  .cheat > summary { cursor: default; list-style: none; }
-  .cheat > summary::-webkit-details-marker { display: none; }
-  .editor { height: 18rem; }
 }
