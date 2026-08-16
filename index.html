@@ -30,7 +30,7 @@
                aria-invalid="false" aria-describedby="pattern-error">
         <span class="delim" aria-hidden="true">/<span id="flag-echo"></span></span>
       </div>
-      <p id="pattern-error" class="error-line" role="alert" hidden></p>
+      <p id="pattern-error" class="error-line" role="alert"></p>
       <fieldset class="flags">
         <legend>Flags</legend>
         <label class="flag"><input type="checkbox" data-flag="g"><code>g</code><span>global</span></label>
@@ -58,6 +58,7 @@
     <section class="pane" aria-labelledby="matches-label">
       <div class="pane-head">
         <h2 id="matches-label">Matches</h2>
+        <span class="pending" aria-hidden="true">checking…</span>
       </div>
       <p id="count-line" class="count-line" role="status" aria-live="polite"></p>
       <ol id="match-list" class="match-list"></ol>

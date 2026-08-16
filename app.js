@@ -63,21 +63,42 @@
     }
   }
 
-  function showError(msg) {
+  /* One line under the pattern field for every state of the pattern itself.
+     A pattern that never returns is such a state, exactly like a syntax error:
+     the count line alone is a screen and a half below the field on a phone,
+     so a message only there is a message the typist never sees. The slot keeps
+     its height whether or not it holds anything — see .error-line in the CSS. */
+  function setPatternMessage(kind, msg) {
+    errorEl.className = 'error-line' + (kind ? ' is-' + kind : '');
+    errorEl.textContent = '';
+    if (!kind) {
+      patternEl.setAttribute('aria-invalid', 'false');
+      return;
+    }
+    errorEl.appendChild(document.createTextNode(
+      kind === 'timeout'
+        ? 'That pattern took longer than 400 ms on this text and was stopped. '
+        : 'That pattern is not valid JavaScript regex. '));
     if (msg) {
-      errorEl.textContent = '';
-      errorEl.appendChild(document.createTextNode('That pattern is not valid JavaScript regex. '));
       var span = document.createElement('span');
-      span.className = 'engine';
+      // The engine's own words are quoted verbatim, so they get the mono face;
+      // the timeout advice is ours, and stays prose.
+      if (kind === 'error') span.className = 'engine';
       span.textContent = msg;
       errorEl.appendChild(span);
-      show(errorEl, true);
-      patternEl.setAttribute('aria-invalid', 'true');
-    } else {
-      errorEl.textContent = '';
-      show(errorEl, false);
-      patternEl.setAttribute('aria-invalid', 'false');
     }
+    patternEl.setAttribute('aria-invalid', 'true');
+  }
+
+  function showError(msg) {
+    setPatternMessage(msg ? 'error' : null, msg);
+  }
+
+  /* One class carries the in-flight state; the CSS decides when it becomes
+     visible, so a 5 ms run never flickers. */
+  function setRunning(on) {
+    document.body.classList.toggle('running', !!on);
+    countEl.setAttribute('aria-busy', on ? 'true' : 'false');
   }
 
   function showNotice(msg) {
@@ -137,7 +158,8 @@
     pendingSeq = -1;
     unanswered.length = 0;
     lastApplied = forSeq;
-    showError(null);
+    setRunning(false);
+    setPatternMessage('timeout', 'Simplify it, or shorten the test string.');
     paint({ ranges: [], groups: [] });
     countEl.className = 'count-line capped';
     setText(countEl, 'Pattern took longer than 400 ms and was stopped.');
@@ -183,6 +205,7 @@
       pendingSeq = -1;
       unanswered.length = 0;
       lastApplied = s;
+      setRunning(false);
       showError(null);
       paint({ ranges: [], groups: [] });
       countEl.className = 'count-line';
@@ -196,6 +219,7 @@
       pendingSeq = -1;
       unanswered.length = 0;
       lastApplied = s;
+      setRunning(false);
       showError(null);
       apply({ seq: s, ranges: [], groups: [], error: null, truncated: false,
               total: 0, tooLong: true });
@@ -207,6 +231,7 @@
       unanswered.push({ seq: s, source: source, flags: flags, text: text });
       clearTimeout(timer);
       timer = setTimeout(function () { onTimeout(s); }, TIMEOUT_MS);
+      setRunning(true);
       worker.postMessage({ seq: s, source: source, flags: flags, text: text });
       return;
     }
@@ -228,6 +253,7 @@
       if (res.seq < lastApplied) return;
       lastApplied = res.seq;
     }
+    if (pendingSeq === -1) setRunning(false);
 
     if (res.tooLong) {
       showError(null);

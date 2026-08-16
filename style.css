@@ -134,11 +134,21 @@ body {
   border-width: 2px;
 }
 
+/* The slot is always here, at a fixed height, whether it holds a message or
+   not: un-hiding it used to push the flags and the editor down 29-50 px on the
+   keystroke that made a pattern invalid, and back up on the backspace — on
+   most keystrokes while typing a group. A message longer than the slot scrolls
+   inside it, which also keeps the engine's echo of a 5,000-character pattern
+   (a 3,177 px block of text at 320 px wide) from taking over the page. */
 .error-line {
   margin: 0.5rem 0 0;
+  height: 4.5em;             /* three lines at this font size */
+  overflow-y: auto;
+  overscroll-behavior: contain;
   color: var(--danger);
   font-size: 0.85rem;
 }
+.error-line:empty { pointer-events: none; }
 .error-line .engine {
   font-family: var(--mono);
   font-size: 0.8rem;
@@ -259,6 +269,25 @@ body {
 
 .count-line { margin: 0 0 0.5rem; font-size: 0.85rem; color: var(--ink-soft); }
 .count-line.capped { color: var(--danger); }
+
+/* While a run is in flight the count line and the marks still show the
+   *previous* run's answer. Say so, rather than presenting an answer to a
+   question the user has already changed. The 150 ms delay is why this is an
+   animation and not a class swap: a pattern that answers in 5 ms — nearly all
+   of them — never flickers the word, and one that hangs shows it before the
+   400 ms kill. Nothing here is motion; reduced-motion users lose nothing. */
+.pending {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+}
+@keyframes reveal-pending { to { opacity: 1; } }
+@keyframes mark-goes-stale { to { opacity: 0.3; } }
+body.running .pending { animation: reveal-pending 0s linear 150ms forwards; }
+body.running #highlight mark { animation: mark-goes-stale 0s linear 150ms forwards; }
+body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; }
 
 .match-list { margin: 0; padding: 0; list-style: none; }
 .match-row {
