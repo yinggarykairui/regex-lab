@@ -145,6 +145,7 @@
     var text = ta.value;
 
     setText(flagEcho, flags);
+    syncFlagButtons();
 
     if (text.length > MAX_TEXT) {
       lastApplied = s;
@@ -349,6 +350,178 @@
     listEl.appendChild(frag);
   }
 
+  /* --- cheat sheet -------------------------------------------------------- */
+
+  /* Every entry does something: a token entry inserts itself at the caret, a
+     flag entry toggles that flag. There are no display-only rows. */
+  var CHEAT = [
+    ['Characters', [
+      ['.', 'any character except a line break'],
+      ['\\d', 'a digit, 0 to 9'],
+      ['\\w', 'a word character: letter, digit or _'],
+      ['\\s', 'any whitespace'],
+      ['\\.', 'a literal dot']
+    ]],
+    ['Quantifiers', [
+      ['*', 'zero or more of what came before'],
+      ['+', 'one or more'],
+      ['?', 'zero or one — optional'],
+      ['{2}', 'exactly two'],
+      ['{2,4}', 'two to four'],
+      ['*?', 'zero or more, lazy — stops as early as it can']
+    ]],
+    ['Groups and captures', [
+      ['(a)', 'capture what is inside'],
+      ['(?:a)', 'group without capturing'],
+      ['(?<name>a)', 'capture under a name'],
+      ['a|b', 'either side'],
+      ['\\1', 'whatever group 1 captured']
+    ]],
+    ['Anchors and boundaries', [
+      ['^', 'start of the string, or of a line with m'],
+      ['$', 'end of the string, or of a line with m'],
+      ['\\b', 'a word boundary — zero width'],
+      ['\\B', 'not a word boundary'],
+      ['(?=a)', 'lookahead: followed by this'],
+      ['(?!a)', 'lookahead: not followed by this'],
+      ['(?<=a)', 'lookbehind: preceded by this'],
+      ['(?<!a)', 'lookbehind: not preceded by this']
+    ]],
+    ['Character classes', [
+      ['[abc]', 'any one of these characters'],
+      ['[^abc]', 'any character except these'],
+      ['[a-z]', 'any character in the range'],
+      ['\\D', 'anything that is not a digit'],
+      ['[\\s\\S]', 'truly any character, line breaks included']
+    ]],
+    ['Flags', [
+      ['g', 'find every match, not just the first', 'g'],
+      ['i', 'ignore case', 'i'],
+      ['m', 'make ^ and $ match at each line', 'm'],
+      ['s', 'let . match a line break too', 's'],
+      ['u', 'treat the pattern as unicode code points', 'u'],
+      ['y', 'sticky: match only at lastIndex', 'y']
+    ]]
+  ];
+
+  var cheatEl = document.getElementById('cheat');
+  var cheatBody = document.getElementById('cheat-body');
+  var flagButtons = [];
+  var caretStart = 0;
+  var caretEnd = 0;
+
+  function rememberCaret() {
+    if (patternEl.selectionStart !== null) {
+      caretStart = patternEl.selectionStart;
+      caretEnd = patternEl.selectionEnd;
+    }
+  }
+
+  function focusPattern(pos) {
+    patternEl.focus();
+    try { patternEl.setSelectionRange(pos, pos); } catch (e) { /* not selectable */ }
+    caretStart = caretEnd = pos;
+  }
+
+  function insertToken(token) {
+    var v = patternEl.value;
+    var s = Math.min(caretStart, v.length);
+    var e = Math.min(caretEnd, v.length);
+    if (e < s) { var swap = s; s = e; e = swap; }
+    patternEl.value = v.slice(0, s) + token + v.slice(e);
+    focusPattern(s + token.length);
+    run();
+  }
+
+  function toggleFlag(flag) {
+    for (var i = 0; i < flagBoxes.length; i++) {
+      if (flagBoxes[i].getAttribute('data-flag') === flag) {
+        flagBoxes[i].checked = !flagBoxes[i].checked;
+      }
+    }
+    focusPattern(Math.min(caretStart, patternEl.value.length));
+    run();
+  }
+
+  function syncFlagButtons() {
+    var flags = currentFlags();
+    for (var i = 0; i < flagButtons.length; i++) {
+      var b = flagButtons[i];
+      b.setAttribute('aria-pressed', flags.indexOf(b.getAttribute('data-flag')) !== -1 ? 'true' : 'false');
+    }
+  }
+
+  function buildCheatSheet() {
+    var frag = document.createDocumentFragment();
+
+    for (var gi = 0; gi < CHEAT.length; gi++) {
+      var section = document.createElement('section');
+      section.className = 'cheat-group';
+
+      var h = document.createElement('h3');
+      h.textContent = CHEAT[gi][0];
+      section.appendChild(h);
+
+      var list = document.createElement('div');
+      list.className = 'cheat-list';
+      var entries = CHEAT[gi][1];
+
+      for (var ei = 0; ei < entries.length; ei++) {
+        var token = entries[ei][0];
+        var gloss = entries[ei][1];
+        var flag = entries[ei][2];
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cheat-entry';
+
+        var tok = document.createElement('span');
+        tok.className = 'token';
+        tok.textContent = token;
+        btn.appendChild(tok);
+
+        var gl = document.createElement('span');
+        gl.className = 'gloss';
+        gl.textContent = gloss;
+        btn.appendChild(gl);
+
+        if (flag) {
+          btn.setAttribute('data-flag', flag);
+          btn.setAttribute('aria-pressed', 'false');
+          btn.title = 'Toggle the ' + flag + ' flag';
+          flagButtons.push(btn);
+        } else {
+          btn.setAttribute('data-token', token);
+          btn.title = 'Insert ' + token + ' at the caret';
+        }
+        list.appendChild(btn);
+      }
+      section.appendChild(list);
+      frag.appendChild(section);
+    }
+
+    cheatBody.appendChild(frag);
+
+    // Keep the caret where the user left it: never let the button take focus.
+    cheatBody.addEventListener('mousedown', function (ev) {
+      if (ev.target.closest('.cheat-entry')) ev.preventDefault();
+    });
+
+    cheatBody.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('.cheat-entry');
+      if (!btn) return;
+      var flag = btn.getAttribute('data-flag');
+      if (flag) toggleFlag(flag);
+      else insertToken(btn.getAttribute('data-token'));
+    });
+  }
+
+  /* Above 720px the sheet is a sidebar, not something to open and close. */
+  function syncCheatOpen() {
+    cheatEl.open = wide.matches;
+  }
+  var wide = window.matchMedia('(min-width: 720px)');
+
   /* --- wiring ------------------------------------------------------------ */
 
   function init() {
@@ -356,8 +529,18 @@
     setFlags(DEFAULT_FLAGS);
     ta.value = DEFAULT_TEXT;
 
+    caretStart = caretEnd = patternEl.value.length;
+
+    buildCheatSheet();
+    syncCheatOpen();
+    if (wide.addEventListener) wide.addEventListener('change', syncCheatOpen);
+    else wide.addListener(syncCheatOpen);
+
     patternEl.addEventListener('input', run);
     ta.addEventListener('input', run);
+    ['keyup', 'click', 'select', 'focus', 'input'].forEach(function (name) {
+      patternEl.addEventListener(name, rememberCaret);
+    });
     ta.addEventListener('scroll', syncScroll);
     window.addEventListener('resize', function () { syncMetrics(); syncScroll(); });
     for (var i = 0; i < flagBoxes.length; i++) {
