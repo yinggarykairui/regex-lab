@@ -37,6 +37,7 @@
   var timer = null;
   var worker = null;
   var retried = false;    // one re-issue per timeout, never a loop
+  var unanswered = [];    // states posted to the live worker and not yet answered
 
   /* --- small helpers ----------------------------------------------------- */
 
@@ -108,6 +109,7 @@
     if (worker) { worker.terminate(); worker = null; }
     clearTimeout(timer);
     pendingSeq = -1;
+    unanswered.length = 0;
     showNotice(FALLBACK_NOTICE);
     run();
   }
@@ -116,6 +118,8 @@
     var res = ev && ev.data;
     if (!res || typeof res.seq !== 'number') return;
     if (res.seq < lastApplied) return;        // stale reply, newer paint already up
+    // A reply for seq s means the worker is past everything up to s.
+    while (unanswered.length && unanswered[0].seq <= res.seq) unanswered.shift();
     if (res.seq === pendingSeq) {
       clearTimeout(timer);
       pendingSeq = -1;
@@ -125,8 +129,13 @@
 
   function onTimeout(forSeq) {
     if (pendingSeq !== forSeq) return;
+    /* The worker hangs on the oldest message it has not answered, not on the
+       newest one posted; everything after it is still queued. That oldest
+       state is the one that was killed. */
+    var killed = unanswered.length ? unanswered[0] : null;
     if (worker) { worker.terminate(); worker = null; }
     pendingSeq = -1;
+    unanswered.length = 0;
     lastApplied = forSeq;
     showError(null);
     paint({ ranges: [], groups: [] });
@@ -136,12 +145,20 @@
 
     /* terminate() also threw away anything queued behind the run that hung, and
        the newest of those may be a perfectly fast pattern the user has already
-       typed. Re-issue the current state once. If that times out too, the
-       pattern on screen really is the slow one and the message above stands. */
-    if (!retried) {
+       typed. Re-issue — but only if the state really moved on. Re-running the
+       identical pattern, flags and text costs a second 400 ms kill and settles
+       the page twice as late for no new information. */
+    if (!retried && changedSince(killed)) {
       retried = true;
       run(true);
     }
+  }
+
+  function changedSince(state) {
+    if (!state) return true;
+    return state.source !== patternEl.value ||
+           state.flags !== currentFlags() ||
+           state.text !== ta.value;
   }
 
   /* --- running a match --------------------------------------------------- */
@@ -159,6 +176,10 @@
     syncFlagButtons();
 
     if (text.length >= MAX_TEXT) {
+      // Nothing is posted, so nothing is pending: disarm like every other path.
+      clearTimeout(timer);
+      pendingSeq = -1;
+      unanswered.length = 0;
       lastApplied = s;
       showError(null);
       apply({ seq: s, ranges: [], groups: [], error: null, truncated: false,
@@ -168,6 +189,7 @@
 
     if (worker) {
       pendingSeq = s;
+      unanswered.push({ seq: s, source: source, flags: flags, text: text });
       clearTimeout(timer);
       timer = setTimeout(function () { onTimeout(s); }, TIMEOUT_MS);
       worker.postMessage({ seq: s, source: source, flags: flags, text: text });
