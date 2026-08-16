@@ -221,12 +221,57 @@
     setText(countEl, line);
   }
 
-  /* --- rendering (filled in by the overlay and match-list passes) --------- */
+  /* --- the highlight overlay --------------------------------------------- */
+
+  /* The <pre> sits behind the textarea and paints backgrounds only; the
+     textarea paints the text. They wrap identically because style.css gives
+     them the same font, padding, border and wrapping rules — plus this, which
+     no stylesheet can do: the textarea's content width shrinks when its
+     scrollbar appears, so copy the measured width across. */
+  function syncMetrics() {
+    var border = pre.offsetWidth - pre.clientWidth;  // 2 * border-width
+    pre.style.width = (ta.clientWidth + border) + 'px';
+    pre.style.height = (ta.clientHeight + (pre.offsetHeight - pre.clientHeight)) + 'px';
+  }
+
+  function syncScroll() {
+    pre.scrollTop = ta.scrollTop;
+    pre.scrollLeft = ta.scrollLeft;
+  }
 
   function paint(res) {
-    pre.textContent = ta.value;
-    listEl.textContent = '';
-    void res;
+    var text = ta.value;
+    var ranges = res.ranges || [];
+    var frag = document.createDocumentFragment();
+    var at = 0;
+
+    for (var i = 0; i < ranges.length; i++) {
+      var start = ranges[i][0];
+      var end = ranges[i][1];
+      if (start < at) continue;                    // never overlap a painted mark
+      if (start > text.length) break;
+      if (end > text.length) end = text.length;
+      if (start > at) frag.appendChild(document.createTextNode(text.slice(at, start)));
+
+      var mark = document.createElement('mark');
+      mark.className = (i % 2 ? 'alt' : '') + (end === start ? ' zero' : '');
+      // textContent, never innerHTML: the test string is user input. A
+      // zero-length match holds no text at all — its caret rule is drawn by an
+      // absolutely positioned ::after, so it adds no width and shifts nothing.
+      mark.textContent = end === start ? '' : text.slice(start, end);
+      frag.appendChild(mark);
+      at = end;
+    }
+    if (at < text.length) frag.appendChild(document.createTextNode(text.slice(at)));
+
+    // A textarea's trailing newline has a line after it; a <pre>'s does not.
+    // Without this the last line of a long string scrolls out of register.
+    frag.appendChild(document.createTextNode('\n'));
+
+    pre.textContent = '';
+    pre.appendChild(frag);
+    syncMetrics();
+    syncScroll();
   }
 
   /* --- wiring ------------------------------------------------------------ */
@@ -238,6 +283,8 @@
 
     patternEl.addEventListener('input', run);
     ta.addEventListener('input', run);
+    ta.addEventListener('scroll', syncScroll);
+    window.addEventListener('resize', function () { syncMetrics(); syncScroll(); });
     for (var i = 0; i < flagBoxes.length; i++) {
       flagBoxes[i].addEventListener('change', run);
     }
