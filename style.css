@@ -371,6 +371,36 @@ body {
 }
 .site-foot p { margin: 0; }
 
+/* --- phone: one column, the cheat sheet folded away ---------------------- */
+
+@media (max-width: 719px) {
+  body { padding: 0.75rem; }
+
+  /* Four lines minimum, even in landscape where 15rem would fill the screen. */
+  .editor { height: clamp(8rem, 40vh, 15rem); }
+
+  /* summary is display:flex, which drops the disclosure triangle — draw one,
+     or the sheet reads as a dead heading. */
+  .cheat > summary::after {
+    content: "";
+    margin-left: auto;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid var(--ink-soft);
+    border-bottom: 2px solid var(--ink-soft);
+    transform: translateY(-2px) rotate(45deg);
+  }
+  .cheat[open] > summary::after { transform: translateY(2px) rotate(-135deg); }
+  .cheat[open] > summary { border-bottom: 1px solid var(--rule); margin-bottom: 0.6rem; }
+
+  .flags { gap: 0 0.75rem; }
+  .match-row .groups { padding-left: 0.5rem; }
+}
+
+@media (max-width: 359px) {
+  .cheat-entry .token { min-width: 3em; }
+}
+
 /* --- two columns above 720px -------------------------------------------- */
 
 @media (min-width: 720px) {
