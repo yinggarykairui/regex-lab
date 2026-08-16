@@ -89,10 +89,23 @@
       out.total++;
 
       if (!repeats) break;
-      if (out.total >= MAX_MATCHES) { out.truncated = true; break; }
 
       // Zero-length match: lastIndex did not move, so move it by hand.
       if (re.lastIndex <= start) re.lastIndex = advance(text, start, unicode);
+
+      if (out.total >= MAX_MATCHES) {
+        /* The cap is reached, but a text with exactly MAX_MATCHES matches is
+           not truncated. Ask for one more before saying so: "capped" has to
+           mean "there is a 1001st match", not "we stopped counting at 1000". */
+        var more = null;
+        try {
+          more = re.exec(text);
+        } catch (err) {
+          more = null;   // an exec that throws here is not a 1001st match
+        }
+        out.truncated = !!more;
+        break;
+      }
     }
     return out;
   }
