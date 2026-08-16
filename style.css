@@ -27,6 +27,8 @@
   --danger: #a32020;
   --mark-a: #ffe08a;
   --mark-b: #b9e3c6;
+  --mark-a-edge: #8a5a00;
+  --mark-b-edge: #1a7048;
   --caret-mark: #d2691e;
 }
 
@@ -42,6 +44,8 @@
     --danger: #f08a8a;
     --mark-a: #6b5518;
     --mark-b: #24503a;
+    --mark-a-edge: #e8c07a;
+    --mark-b-edge: #7fd0a3;
     --caret-mark: #e8955a;
   }
 }
@@ -274,15 +278,30 @@ body.two-col .editor { height: clamp(8rem, 45vh, 18rem); }
   outline: none;
 }
 
+/* A tint alone cannot carry "a match is here": light mode measures 1.25:1
+   against the page for tint A and 1.36:1 for tint B, and 1.10:1 between the
+   two, which is what tells adjacent matches apart. Darkening the tints is not
+   the way out — the text sits on them and would lose what the tints gain — so
+   the boundary is drawn instead of filled, and the two tints carry *different*
+   boundaries: A gets a bottom rule, B gets a bottom rule plus a bar at each
+   end, so where two matches touch there is a vertical edge between them. Both
+   rules are inset box-shadows: they change no metric the overlay depends on. */
 #highlight mark {
   color: transparent;
   border-radius: 2px;
   background: var(--mark-a);
+  box-shadow: inset 0 -2px 0 0 var(--mark-a-edge);
 }
-#highlight mark.alt { background: var(--mark-b); }
+#highlight mark.alt {
+  background: var(--mark-b);
+  box-shadow: inset 0 -2px 0 0 var(--mark-b-edge),
+              inset 2px 0 0 0 var(--mark-b-edge),
+              inset -2px 0 0 0 var(--mark-b-edge);
+}
 #highlight mark.zero {
   position: relative;
   background: transparent;
+  box-shadow: none;   /* nothing to bound: the caret rule below is the mark */
 }
 #highlight mark.zero::after {
   content: "";
