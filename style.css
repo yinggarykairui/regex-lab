@@ -175,15 +175,20 @@ body.two-col .layout {
 }
 .error-line.is-timeout { color: var(--warn); }
 
-/* The slot is always here, at a fixed height, whether it holds a message or
-   not: un-hiding it used to push the flags and the editor down 29-50 px on the
-   keystroke that made a pattern invalid, and back up on the backspace — on
-   most keystrokes while typing a group. A message longer than the slot scrolls
-   inside it, which also keeps the engine's echo of a 5,000-character pattern
-   (a 3,177 px block of text at 320 px wide) from taking over the page. */
+/* The slot is always here, whether it holds a message or not: un-hiding it
+   used to push the flags and the editor down 29-50 px on the keystroke that
+   made a pattern invalid, and back up on the backspace — on most keystrokes
+   while typing a group. But three reserved lines cost 61 px of a 568 px phone
+   for nothing, which is 11% of the screen spent on blank space above the one
+   thing the page is for. One line is reserved and two is the ceiling, so the
+   worst shift on entering an error state is a single line, and it happens
+   once. A message longer than that scrolls inside the slot, which also keeps
+   the engine's echo of a 5,000-character pattern (a 3,177 px block of text at
+   320 px wide) from taking over the page. */
 .error-line {
   margin: 0.5rem 0 0;
-  height: 4.5em;             /* three lines at this font size */
+  min-height: 1.5em;         /* one line at this font size: 20.4px */
+  max-height: 3em;           /* two: the most an error may push the editor */
   overflow-y: auto;
   overscroll-behavior: contain;
   color: var(--danger);
@@ -481,6 +486,25 @@ body.two-col .site-foot { max-width: 1380px; }
 @media (max-width: 719px) {
   .flags { gap: 0 0.75rem; }
   .match-row .groups { padding-left: 0.5rem; }
+}
+
+/* Phone: everything above the test-string box is overhead, and at 320x568
+   there was so much of it that not one pixel of the box — or of a highlight,
+   which is the whole pitch and the reason the page ships filled in — was on
+   the first screen. Nothing here shrinks a tap target: the flags keep their
+   40px, they are just laid in two even columns so they take three rows
+   instead of four or five. The rest is padding, gaps and leading. */
+@media (max-width: 480px) {
+  body { padding: 0.5rem; }
+  .site-head { margin-bottom: 0.5rem; }
+  .site-head h1 { font-size: 1.2rem; }
+  .tagline { line-height: 1.35; }
+  .tester { gap: 0.65rem; }
+  .pane { padding: 0.65rem; }
+  .pane-head { margin-bottom: 0.35rem; line-height: 1.3; }
+  .hint { font-size: 0.75rem; }
+  .flags { margin-top: 0.5rem; padding: 0.25rem 0.4rem 0.4rem; gap: 0 0.5rem; }
+  .flag { flex: 1 1 calc(50% - 0.5rem); }
 }
 
 @media (max-width: 359px) {
