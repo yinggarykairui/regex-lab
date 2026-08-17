@@ -71,10 +71,13 @@
   function setPatternMessage(kind, msg) {
     errorEl.className = 'error-line' + (kind ? ' is-' + kind : '');
     errorEl.textContent = '';
-    if (!kind) {
-      patternEl.setAttribute('aria-invalid', 'false');
-      return;
-    }
+    /* aria-invalid says "this value is malformed", and the spec ties that to a
+       SyntaxError at construction. A pattern that ran past 400 ms is perfectly
+       well-formed — it is expensive, not wrong — so it gets its own class and
+       its own border colour and leaves the attribute alone. */
+    patternEl.setAttribute('aria-invalid', kind === 'error' ? 'true' : 'false');
+    patternEl.classList.toggle('timed-out', kind === 'timeout');
+    if (!kind) return;
     errorEl.appendChild(document.createTextNode(
       kind === 'timeout'
         ? 'That pattern took longer than 400 ms on this text and was stopped. '
@@ -87,7 +90,6 @@
       span.textContent = msg;
       errorEl.appendChild(span);
     }
-    patternEl.setAttribute('aria-invalid', 'true');
   }
 
   function showError(msg) {
@@ -124,6 +126,25 @@
     return true;
   }
 
+  /* An exec that has entered `(a+)+$` cannot be interrupted from inside, so
+     terminate() is the only way to stop it. That makes "stop caring about the
+     request in flight" and "kill the worker" the same act: an abandoned
+     runaway keeps burning a core, and — worse — it is still the worker the
+     next keystroke posts to, so the next pattern inherits the dead one's
+     400 ms and a valid sub-millisecond regex is reported as a timeout. Every
+     path that drops a pending request calls this, not just onTimeout(). */
+  function abandonInFlight() {
+    clearTimeout(timer);
+    timer = null;
+    var inFlight = pendingSeq !== -1 || unanswered.length > 0;
+    pendingSeq = -1;
+    unanswered.length = 0;
+    if (!inFlight || !worker) return;   // idle worker, or the fallback: nothing to kill
+    worker.terminate();
+    worker = null;
+    if (!spawnWorker()) showNotice(FALLBACK_NOTICE);
+  }
+
   function onWorkerError() {
     // The worker script failed to load or threw at the top level. Stop trusting
     // it and match on the page instead, rather than going silent.
@@ -154,16 +175,13 @@
        newest one posted; everything after it is still queued. That oldest
        state is the one that was killed. */
     var killed = unanswered.length ? unanswered[0] : null;
-    if (worker) { worker.terminate(); worker = null; }
-    pendingSeq = -1;
-    unanswered.length = 0;
+    abandonInFlight();     // terminates the wedged worker and spawns a fresh one
     lastApplied = forSeq;
     setRunning(false);
     setPatternMessage('timeout', 'Simplify it, or shorten the test string.');
     paint({ ranges: [], groups: [] });
     countEl.className = 'count-line capped';
     setText(countEl, 'Pattern took longer than 400 ms and was stopped.');
-    spawnWorker();   // fresh worker, so the next keystroke works
 
     /* terminate() also threw away anything queued behind the run that hung, and
        the newest of those may be a perfectly fast pattern the user has already
@@ -201,9 +219,7 @@
        matches on the default text, and as a reset gesture that is hostile.
        Clearing the field is an idle state, not a question. */
     if (source === '') {
-      clearTimeout(timer);
-      pendingSeq = -1;
-      unanswered.length = 0;
+      abandonInFlight();   // an idle UI must not sit on top of a live exec
       lastApplied = s;
       setRunning(false);
       showError(null);
@@ -214,10 +230,8 @@
     }
 
     if (text.length >= MAX_TEXT) {
-      // Nothing is posted, so nothing is pending: disarm like every other path.
-      clearTimeout(timer);
-      pendingSeq = -1;
-      unanswered.length = 0;
+      // Nothing is posted, so nothing may stay pending: disarm and kill.
+      abandonInFlight();
       lastApplied = s;
       setRunning(false);
       showError(null);

@@ -30,6 +30,7 @@
   --mark-a-edge: #8a5a00;
   --mark-b-edge: #1a7048;
   --caret-mark: #d2691e;
+  --warn: #8a5300;        /* the stopped-run state: not an error, not nothing */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +48,7 @@
     --mark-a-edge: #e8c07a;
     --mark-b-edge: #7fd0a3;
     --caret-mark: #e8955a;
+    --warn: #e0a96d;
   }
 }
 
@@ -163,6 +165,14 @@ body.two-col .layout {
   border-color: var(--danger);
   border-width: 2px;
 }
+/* A stopped run is a distinct state from a malformed one, so it gets a
+   distinct border — but not aria-invalid, because the pattern is valid. */
+.pattern-input.timed-out {
+  border-color: var(--warn);
+  border-width: 2px;
+  border-style: dashed;
+}
+.error-line.is-timeout { color: var(--warn); }
 
 /* The slot is always here, at a fixed height, whether it holds a message or
    not: un-hiding it used to push the flags and the editor down 29-50 px on the
