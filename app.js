@@ -666,16 +666,25 @@
      one thing that settles that trade is the width the test-string box would
      have *in two columns* — not the viewport, and not an area, which mixes
      width with height and so made the sidebar come and go with window height:
-     1280x800 showed it, 1280x600 did not. Measuring the candidate width live
+     1280x800 showed it, 1280x600 buried it. Measuring the candidate width live
      keeps the sidebar width, the gaps and the padding in the stylesheet where
-     they belong, and makes the arrangement a function of width alone. A media
-     query here would be the 719 -> 720 cliff again.
+     they belong, and makes the arrangement a function of width alone.
 
-     The minimum is 620 px: 64 columns of the editor's 16 px monospace
-     (9.6 px per advance) plus slack for a scrollbar. 64 columns is where a
-     test string still reads as lines instead of as wrapping, and the box is
-     what the 260 px sheet takes its width from. It puts the switch at a
-     955 px window, so 1024, 1152 and 1280 all open with the sheet in view. */
+     The minimum is 620px of editor box. The textarea inside it spends 21px on
+     its own border and padding, so what the reader actually gets is 598.8px of
+     text: 62 columns of the 16px monospace at the switch, 64 at a 971px
+     window, 69 at 1024. 62 is the floor — wide enough that a line of test
+     string still reads as a line rather than as wrapping.
+
+     And it has a cliff, which the comment this replaces wrongly claimed to
+     avoid: between a 954px and a 955px window the editor steps 899px -> 620px,
+     -31.0% of width and -17.1% of area, because that is what giving up a
+     column to a 260px sidebar costs. The area rule it replaces never stepped
+     more than 5% anywhere in 320-1400, and paid for that with a sidebar that
+     did not exist below 1232px and moved with window height. One step at one
+     width is the price of the sheet being there on every common laptop. A
+     viewport media query would put the same step at a number that stops
+     agreeing with the stylesheet the first time the sidebar is resized. */
   var MIN_TWO_COL_EDITOR = 620;
 
   var editorEl = document.getElementById('editor');
