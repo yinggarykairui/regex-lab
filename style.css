@@ -500,14 +500,15 @@ body.two-col .site-foot { max-width: 1380px; }
    which is the whole pitch and the reason the page ships filled in — was on
    the first screen. Nothing here shrinks a tap target: the flags keep their
    40px, they are just laid in two even columns so they take three rows
-   instead of four or five. The rest is padding, gaps and leading. */
+   instead of four or five. The rest is margins, gaps and leading — nothing
+   here touches page or pane padding, because those set the editor's width and
+   a step in width at 480px would be a cliff, which is what this build spent
+   its last two commits removing. Height is free to step; width is not. */
 @media (max-width: 480px) {
-  body { padding: 0.5rem; }
   .site-head { margin-bottom: 0.5rem; }
   .site-head h1 { font-size: 1.2rem; }
   .tagline { line-height: 1.35; }
   .tester { gap: 0.65rem; }
-  .pane { padding: 0.65rem; }
   .pane-head { margin-bottom: 0.35rem; line-height: 1.3; }
   .hint { font-size: 0.75rem; }
   .flags { margin-top: 0.5rem; padding: 0.25rem 0.4rem 0.4rem; gap: 0 0.5rem; }
