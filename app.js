@@ -641,9 +641,21 @@
       var btn = ev.target.closest('.cheat-entry');
       if (!btn) return;
       var flag = btn.getAttribute('data-flag');
+
+      /* A pointer click reports a non-zero detail; Enter and Space on a focused
+         button report 0. A mouse user never gave the button focus — mousedown
+         is prevented above — so leaving them in the pattern field is where they
+         already were. A keyboard user is standing on the button, and sending
+         them to the field means Tabbing back through the whole sheet to insert
+         a second token, so they keep their place. The caret the next insertion
+         uses is remembered from the field either way. */
+      var byKeyboard = ev.detail === 0;
       keepingPagePut(function () {
         if (flag) toggleFlag(flag);
         else insertToken(btn.getAttribute('data-token'));
+        if (byKeyboard) {
+          try { btn.focus({ preventScroll: true }); } catch (err) { btn.focus(); }
+        }
       });
     });
   }
