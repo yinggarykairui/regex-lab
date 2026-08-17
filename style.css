@@ -87,10 +87,11 @@ body.two-col .site-head { max-width: 1380px; }
   align-items: start;
 }
 
-/* app.js adds .two-col to <body> when it has measured the two-column
-   arrangement to give the test-string box more area than the one-column one —
-   see chooseArrangement(). The sidebar is added beside the tester rather than
-   carved out of it, so the tester column keeps its 1100px ceiling either way. */
+/* app.js adds .two-col to <body> when it has measured that the test-string box
+   would still be at least 620px wide with the sidebar beside it — see
+   chooseArrangement(). Width only: the arrangement never changes with window
+   height. The sidebar is added beside the tester rather than carved out of it,
+   so the tester column keeps its 1100px ceiling either way. */
 body.two-col .layout {
   grid-template-columns: minmax(0, 1fr) 260px;
   gap: 1.25rem;

@@ -650,34 +650,33 @@
 
   /* --- which arrangement, measured ---------------------------------------- */
 
-  /* Two columns buy the tester a sidebar and cost it a column of width; one
-     column costs the editor its height. Which one leaves the test-string box
-     bigger is a question with an answer at every window size, so lay out both
-     and keep the larger, rather than naming a width and hoping. A media query
-     here would be a guess evaluated at the two sizes it was written for — and
-     that is exactly how the 719 -> 720 cliff got in: one pixel of window cost
-     the box 46% of its width, and it did not recover until 1023.
+  /* Two columns buy the tester a sidebar and cost it a column of width. The
+     one thing that settles that trade is the width the test-string box would
+     have *in two columns* — not the viewport, and not an area, which mixes
+     width with height and so made the sidebar come and go with window height:
+     1280x800 showed it, 1280x600 did not. Measuring the candidate width live
+     keeps the sidebar width, the gaps and the padding in the stylesheet where
+     they belong, and makes the arrangement a function of width alone. A media
+     query here would be the 719 -> 720 cliff again.
 
-     Two forced layouts, only when the window size actually changes. */
-  var layoutEl = document.querySelector('.layout');
+     The minimum is 620 px: 64 columns of the editor's 16 px monospace
+     (9.6 px per advance) plus slack for a scrollbar. 64 columns is where a
+     test string still reads as lines instead of as wrapping, and the box is
+     what the 260 px sheet takes its width from. It puts the switch at a
+     955 px window, so 1024, 1152 and 1280 all open with the sheet in view. */
+  var MIN_TWO_COL_EDITOR = 620;
+
   var editorEl = document.getElementById('editor');
-  var sizeKey = '';
-
-  function editorArea() {
-    return editorEl.clientWidth * editorEl.clientHeight;
-  }
+  var widthKey = -1;
 
   function chooseArrangement(force) {
-    var key = window.innerWidth + 'x' + window.innerHeight;
-    if (!force && key === sizeKey) return false;
-    sizeKey = key;
+    if (!force && window.innerWidth === widthKey) return false;
+    widthKey = window.innerWidth;
 
     var was = document.body.classList.contains('two-col');
     document.body.classList.add('two-col');
-    var two = editorArea();
-    document.body.classList.remove('two-col');
-    var one = editorArea();
-    var want = two > one;
+    var twoColEditor = editorEl.clientWidth;
+    var want = twoColEditor >= MIN_TWO_COL_EDITOR;
     document.body.classList.toggle('two-col', want);
     return want !== was;
   }
