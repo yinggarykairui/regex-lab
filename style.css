@@ -31,6 +31,7 @@
   --mark-b-edge: #1a7048;
   --caret-mark: #d2691e;
   --warn: #8a5300;        /* the stopped-run state: not an error, not nothing */
+  --delim: #757168;       /* the /.../ slashes: 4.86:1 on --panel */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +50,7 @@
     --mark-b-edge: #7fd0a3;
     --caret-mark: #e8955a;
     --warn: #e0a96d;
+    --delim: #8b9198;     /* 5.08:1 on --panel */
   }
 }
 
@@ -130,8 +132,13 @@ body.two-col .layout {
   gap: 0.35rem;
   font-family: var(--mono);
 }
+/* The slashes are the affordance for "bare source — no surrounding slashes",
+   and they sit next to a flag echo at 6.6:1, so at --rule-strong (2.16:1 light,
+   2.11:1 dark) "/g" painted as a ghost slash beside a solid letter. They are a
+   label, not a rule, so they take a text colour: 4.86:1 and 5.08:1, still
+   quieter than --ink-soft, which is what keeps them secondary to the pattern. */
 .delim {
-  color: var(--rule-strong);
+  color: var(--delim);
   font-family: var(--mono);
   font-size: 1rem;
   align-self: center;
