@@ -539,6 +539,23 @@ body.two-col .site-foot { max-width: 1380px; }
      rather than three — one wrapped word here is 20px of the first screen. */
   .flag { flex: 1 1 calc(50% - 0.5rem); padding: 0; }
   .flag span { font-size: 0.8rem; }
+  /* Two reserved lines instead of one, and the measurement rather than the hope.
+     Typing \b(\w+)@ at 320x568 moved the test-string box on four keystrokes and
+     on four backspaces, 42.4px each way. Two lines absorb one of those lines:
+     the movements still number four, but each is 22.0px instead of 42.4px. The
+     count does not fall to one, which is what this fix was predicted to do.
+
+     Three reserved lines do end it — 1.6px, measured — and are not taken: the
+     day-023 build tried a three-line reserve and removed it because 61px of a
+     568px screen held nothing, and one evening's rescue is the wrong place to
+     reverse a decision three critics reviewed. The numbers are in the sign-off
+     so the next shift can weigh 40.8px of idle screen against 22px of jump with
+     both figures in front of it. A high-water reserve that only grows while the
+     field has focus would cost neither, and is filed rather than improvised.
+
+     This is a height step, not a width step: the 480px rule above buys its space
+     from margins for exactly that reason. */
+  .error-line { min-height: 3em; }
 }
 
 @media (max-width: 359px) {
