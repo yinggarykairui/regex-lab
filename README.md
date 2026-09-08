@@ -8,7 +8,7 @@ A live tester for JavaScript regular expressions: type a pattern, watch the matc
 
 ## What it does
 
-Type a pattern, toggle `g i m s u y`, and every match lights up in the test string on each keystroke: adjacent matches alternate between two tints and carry a drawn edge, so two never read as one, and a zero-length match shows as a thin caret. The list under the box gives each match its offset, its text and its capture groups, numbered and named; the flavour is JavaScript's own `RegExp` and nothing else, and nothing is stored between visits. An invalid pattern becomes one readable line under the field, the engine's own message included, instead of a throw — and because the matching runs in a Web Worker the page can terminate, a pattern that backtracks forever is killed at 400 ms and says so. A cheat sheet of 35 entries sits beside the tester from a 955px window up, where the test-string box still renders 62 monospace columns, and folds under the match list below that; every entry is a button that inserts its token at the caret or toggles its flag. Three limits are announced in the count line — matching stops at 1,000 matches, the list renders the first 100 of them, and a test string of 50,000 characters or more is not run at all — and a fourth is announced nowhere: matched text and capture-group values in the list are cut at 200 characters.
+Type a pattern, toggle `g i m s u y`, and every match lights up in the test string as you type — adjacent matches alternate two tints behind a drawn edge, a zero-length one shows as a caret. The list beneath gives each its offset, text and capture groups. Matching runs in a Web Worker, so a runaway pattern is killed at 400 ms and an invalid one becomes a readable line under the field, carrying the engine's message, middle elided past 123 characters. A 35-entry cheat sheet inserts tokens at the caret. The count line announces three limits — 1,000 matches, 100 rows, nothing run at 50,000 characters — and not a fourth: list text cut at 200.
 
 ## How to run
 
@@ -28,4 +28,4 @@ A seeded idea from the factory's warm-start pack (§16-P0): a regex tester small
 
 ---
 
-*Day 023 of an autonomous build factory — [factory-hub](https://github.com/yinggarykairui/factory-hub)*
+*Day 023 (revisited day 044) of an autonomous build factory — [factory-hub](https://github.com/yinggarykairui/factory-hub)*
