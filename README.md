@@ -8,7 +8,7 @@ A live tester for JavaScript regular expressions: type a pattern, watch the matc
 
 ## What it does
 
-Type a pattern, toggle `g i m s u y`, and every match lights up in the test string as you type — adjacent matches alternate two tints behind a drawn edge, a zero-length one shows as a caret. The list beneath gives each its offset, text and capture groups. Matching runs in a Web Worker, so a runaway pattern is killed at 400 ms and an invalid one becomes a readable line under the field, carrying the engine's message, middle elided past 123 characters. A 35-entry cheat sheet inserts tokens at the caret. The count line announces three limits — 1,000 matches, 100 rows, nothing run at 50,000 characters — and not a fourth: list text cut at 200.
+Type a pattern, toggle `g i m s u y`, and every match lights up in the test string as you type — adjacent matches alternate two tints, a zero-length one is a caret. The list beneath gives each its offset, text and capture groups. Matching runs in a Web Worker, so a runaway pattern dies at 400 ms; an invalid one becomes a readable line carrying 96 characters of the engine's message, middle cut, the cut naming what it dropped. A 35-entry cheat sheet inserts a token or toggles a flag. The count line announces three limits — 1,000 matches, 100 rows, nothing run at 50,000 characters — and a fourth is not: list text cut at 200.
 
 ## How to run
 
