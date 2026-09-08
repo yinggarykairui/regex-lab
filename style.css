@@ -23,6 +23,16 @@
   --ink-soft: #55595e;
   --rule: #d9d7d2;
   --rule-strong: #b3b0a9;
+  /* Structure, not decoration: the lines that say where one pane stops and the
+     next begins. --rule is 1.44:1 on the panel and 1.39:1 on the page, so at
+     320px the boundary between the Test string pane and the Matches pane was a
+     single line nobody could see and the three panes read as one sheet — with
+     "Matches" looking like a heading inside the test-string box. WCAG 1.4.11
+     asks 3:1 of a component boundary that carries meaning, and this one does.
+     #928f89 is 3.22:1 on --panel and 3.11:1 on --bg, and keeps the warm cast
+     the rest of the palette has. Decorative rules — the flags fieldset, a
+     cheat-sheet entry — are not structure and keep their present weight. */
+  --rule-structure: #928f89;
   --accent: #2f5d9e;
   --danger: #a32020;
   --mark-a: #ffe08a;
@@ -42,6 +52,7 @@
     --ink-soft: #a3a8ae;
     --rule: #33383d;
     --rule-strong: #4d545b;
+    --rule-structure: #697077;   /* 3.22:1 on --panel, 3.55:1 on --bg */
     --accent: #8ab4f8;
     --danger: #f08a8a;
     --mark-a: #6b5518;
@@ -106,7 +117,7 @@ body.two-col .layout {
 
 .pane {
   background: var(--panel);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-structure);
   border-radius: 6px;
   padding: 0.85rem;
   min-width: 0;
@@ -373,7 +384,7 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
 
 .match-list { margin: 0; padding: 0; list-style: none; }
 .match-row {
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--rule-structure);
   padding: 0.4rem 0;
   font-size: 0.85rem;
   display: grid;
@@ -415,7 +426,7 @@ body.running .count-line { animation: mark-goes-stale 0s linear 150ms forwards; 
 
 .cheat {
   background: var(--panel);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--rule-structure);
   border-radius: 6px;
   min-width: 0;
 }
