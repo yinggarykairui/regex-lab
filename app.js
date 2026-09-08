@@ -111,7 +111,16 @@
 
   function elideEngine(msg) {
     if (msg.length <= MAX_ENGINE_CHARS) return msg;
-    return msg.slice(0, ENGINE_HEAD) + ENGINE_MARK + msg.slice(msg.length - ENGINE_TAIL);
+    var head = ENGINE_HEAD;
+    var tail = msg.length - ENGINE_TAIL;
+    /* Never cut a surrogate pair in half. String indices are UTF-16 code units, and
+       a pattern of emoji is exactly the kind of input that lands a cut mid-pair: the
+       half that survives renders as a replacement glyph, so the clamp would put a
+       corruption mark in a message whose whole job is to be read. Both edges move
+       outward by one unit, which can only ever shorten the elision by two. */
+    if (msg.charCodeAt(head - 1) >= 0xD800 && msg.charCodeAt(head - 1) <= 0xDBFF) head -= 1;
+    if (msg.charCodeAt(tail) >= 0xDC00 && msg.charCodeAt(tail) <= 0xDFFF) tail += 1;
+    return msg.slice(0, head) + ENGINE_MARK + msg.slice(tail);
   }
 
   function showError(msg) {
