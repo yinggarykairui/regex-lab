@@ -121,7 +121,14 @@
      as the parentheses around it and reads as "the message trailed off", which is the
      broken reading rather than the shortened one. This says what happened and how much of
      it happened, in the prose face, and is kept on one line so a wrap cannot split it. */
-  function elisionMark(n) {
+  function elisionMark(dropped) {
+    /* Counted in code points, not code units. The mark says "characters", and on a
+       pattern of emoji those differ by two — a critic measured the old count calling
+       356 what a reader would count as 178. Array.from iterates code points, so the
+       number in the mark is the number a person would arrive at. The locale tag is
+       hardcoded so the grouping is the same everywhere and can never come back in
+       another numbering system. */
+    var n = Array.from(dropped).length;
     return '[\u2026 ' + n.toLocaleString('en-US') + ' characters cut \u2026]';
   }
 
@@ -138,10 +145,12 @@
        pattern of emoji is exactly the kind of input that lands a cut inside a pair: the
        half that survives renders as a replacement glyph, so the clamp would put a
        corruption mark in a message whose only job is to be read. Both edges move outward
-       by one unit, which can only ever shorten the elision by two. */
+       by one unit, which lengthens the dropped run by up to two and leaves as few as 94
+       units surviving rather than 96. (An earlier draft of this comment had that
+       backwards and said the elision could only shorten; it cannot.) */
     if (msg.charCodeAt(head - 1) >= 0xD800 && msg.charCodeAt(head - 1) <= 0xDBFF) head -= 1;
     if (msg.charCodeAt(tail) >= 0xDC00 && msg.charCodeAt(tail) <= 0xDFFF) tail += 1;
-    return [msg.slice(0, head), elisionMark(tail - head), msg.slice(tail)];
+    return [msg.slice(0, head), elisionMark(msg.slice(head, tail)), msg.slice(tail)];
   }
 
   function showError(msg) {
