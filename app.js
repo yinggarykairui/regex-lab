@@ -83,12 +83,16 @@
         ? 'That pattern took longer than 400 ms on this text and was stopped. '
         : 'That pattern is not valid JavaScript regex. '));
     if (msg) {
-      var span = document.createElement('span');
       // The engine's own words are quoted verbatim, so they get the mono face;
-      // the timeout advice is ours, and stays prose.
-      if (kind === 'error') span.className = 'engine';
-      span.textContent = kind === 'error' ? elideEngine(msg) : msg;
-      errorEl.appendChild(span);
+      // the timeout advice is ours, and stays prose. A clamped message comes back
+      // in three parts so the marker between them can carry its own face.
+      var parts = kind === 'error' ? engineParts(msg) : [msg];
+      for (var i = 0; i < parts.length; i++) {
+        var span = document.createElement('span');
+        span.className = kind !== 'error' ? '' : (i === 1 ? 'elision' : 'engine');
+        span.textContent = parts[i];
+        errorEl.appendChild(span);
+      }
     }
   }
 
@@ -104,23 +108,40 @@
      message worth reading. Head + marker + tail keeps the engine's opening words and its
      closing reason and drops the run of source between them. Nothing is lost by it: the
      source is the pattern in the field directly above, unabridged and still editable. */
-  var ENGINE_HEAD = 64;
+  var ENGINE_HEAD = 40;
   var ENGINE_TAIL = 56;
-  var ENGINE_MARK = ' … ';
-  var MAX_ENGINE_CHARS = ENGINE_HEAD + ENGINE_MARK.length + ENGINE_TAIL;
+  var ENGINE_KEEP = ENGINE_HEAD + ENGINE_TAIL;   /* 96 characters of the message survive */
+  /* Below this much overflow the marker would cost more than the cut saves, so a message
+     is only ever shortened when there is something worth saying about it. It also puts a
+     floor under the dropped count, which is why the marker never has to read "1
+     characters". */
+  var ELIDE_MIN = 40;
 
-  function elideEngine(msg) {
-    if (msg.length <= MAX_ENGINE_CHARS) return msg;
+  /* The marker is not a bare ellipsis. A bare one lands mid-wall in the same red mono face
+     as the parentheses around it and reads as "the message trailed off", which is the
+     broken reading rather than the shortened one. This says what happened and how much of
+     it happened, in the prose face, and is kept on one line so a wrap cannot split it. */
+  function elisionMark(n) {
+    return '[\u2026 ' + n.toLocaleString('en-US') + ' characters cut \u2026]';
+  }
+
+  /* Returns the message as parts: [head, mark, tail], or [msg] when it fits. The head
+     budget is small on purpose. Most of what a long message contains is the engine's echo
+     of the source, and the source is in the field eight pixels above, unabridged — so the
+     budget belongs to the reason, which is at the end and is the only part that tells the
+     typist anything they do not already have. */
+  function engineParts(msg) {
+    if (msg.length <= ENGINE_KEEP + ELIDE_MIN) return [msg];
     var head = ENGINE_HEAD;
     var tail = msg.length - ENGINE_TAIL;
-    /* Never cut a surrogate pair in half. String indices are UTF-16 code units, and
-       a pattern of emoji is exactly the kind of input that lands a cut mid-pair: the
+    /* Never cut a surrogate pair in half. String indices are UTF-16 code units, and a
+       pattern of emoji is exactly the kind of input that lands a cut inside a pair: the
        half that survives renders as a replacement glyph, so the clamp would put a
-       corruption mark in a message whose whole job is to be read. Both edges move
-       outward by one unit, which can only ever shorten the elision by two. */
+       corruption mark in a message whose only job is to be read. Both edges move outward
+       by one unit, which can only ever shorten the elision by two. */
     if (msg.charCodeAt(head - 1) >= 0xD800 && msg.charCodeAt(head - 1) <= 0xDBFF) head -= 1;
     if (msg.charCodeAt(tail) >= 0xDC00 && msg.charCodeAt(tail) <= 0xDFFF) tail += 1;
-    return msg.slice(0, head) + ENGINE_MARK + msg.slice(tail);
+    return [msg.slice(0, head), elisionMark(tail - head), msg.slice(tail)];
   }
 
   function showError(msg) {

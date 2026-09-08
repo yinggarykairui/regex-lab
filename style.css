@@ -219,6 +219,18 @@ body.two-col .layout {
   font-family: var(--mono);
   font-size: 0.8rem;
 }
+/* The mark that says the message was shortened. It is in the prose face rather
+   than the engine's mono, and in the quiet ink, because its job is to be found
+   in a wall of red monospace — a bare ellipsis in that wall reads as a message
+   that trailed off, which is the broken reading and not the true one. nowrap
+   keeps it one object: split across a line break it stops looking like a mark
+   at all. */
+.error-line .elision {
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
 .notice {
   margin: 0.5rem 0 0;
   color: var(--ink-soft);
@@ -539,23 +551,28 @@ body.two-col .site-foot { max-width: 1380px; }
      rather than three — one wrapped word here is 20px of the first screen. */
   .flag { flex: 1 1 calc(50% - 0.5rem); padding: 0; }
   .flag span { font-size: 0.8rem; }
-  /* Two reserved lines instead of one, and the measurement rather than the hope.
+  /* Three reserved lines, and the reversal of a day-023 decision, on measured
+     grounds and said out loud rather than slipped in.
+
      Typing \b(\w+)@ at 320x568 moved the test-string box on four keystrokes and
-     on four backspaces, 42.4px each way. Two lines absorb one of those lines:
-     the movements still number four, but each is 22.0px instead of 42.4px. The
-     count does not fall to one, which is what this fix was predicted to do.
+     four backspaces, 42.4px each way, because the slot reserved one line and the
+     message needs three. Two lines were tried first, as the residual issue asked:
+     the movements still numbered four, at 22.0px — half the travel, none of the
+     count, and a permanent 20.4px of empty screen bought for it. All three critics
+     landed on the same reading, that two lines is the only one of the three
+     options worse than both others.
 
-     Three reserved lines do end it — 1.6px, measured — and are not taken: the
-     day-023 build tried a three-line reserve and removed it because 61px of a
-     568px screen held nothing, and one evening's rescue is the wrong place to
-     reverse a decision three critics reviewed. The numbers are in the sign-off
-     so the next shift can weigh 40.8px of idle screen against 22px of jump with
-     both figures in front of it. A high-water reserve that only grows while the
-     field has focus would cost neither, and is filed rather than improvised.
+     Three lines end it: 1.6px, measured, which is line-box rounding rather than
+     movement. The cost is 40.8px of a 568px screen holding nothing, and day 023
+     removed a three-line reserve for exactly that reason. That decision is
+     reversed here on two grounds it did not have. It was global; this is under
+     480px only, where the jump is. And the message that has to fit is now clamped
+     — the slot's worst case is a 126.3px constant instead of 3,177px — so what a
+     reserve is being asked to absorb is a bounded thing for the first time.
 
-     This is a height step, not a width step: the 480px rule above buys its space
-     from margins for exactly that reason. */
-  .error-line { min-height: 3em; }
+     A reserve that only grows while the field has focus would cost neither the
+     screen nor the jump. It is filed, not improvised here. */
+  .error-line { min-height: 4.5em; }
 }
 
 @media (max-width: 359px) {
