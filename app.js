@@ -87,9 +87,31 @@
       // The engine's own words are quoted verbatim, so they get the mono face;
       // the timeout advice is ours, and stays prose.
       if (kind === 'error') span.className = 'engine';
-      span.textContent = msg;
+      span.textContent = kind === 'error' ? elideEngine(msg) : msg;
       errorEl.appendChild(span);
     }
+  }
+
+  /* The engine puts the pattern's own source inside its message, so a 5,000-character
+     invalid pattern is a 5,000-character message — and the slot below the field has no
+     ceiling (deliberately; see .error-line), so that message was 3,177px of it at 320px
+     and put the test-string box 3.7 screens down. The budget below bounds the echo.
+
+     The cut is in the MIDDLE. V8 formats the message as
+     "Invalid regular expression: /<source>/<flags>: <reason>", so cutting the tail —
+     which is what the match list's 200-character rule does, and what it should do there,
+     because a match is its own head — would throw away the reason, the only part of the
+     message worth reading. Head + marker + tail keeps the engine's opening words and its
+     closing reason and drops the run of source between them. Nothing is lost by it: the
+     source is the pattern in the field directly above, unabridged and still editable. */
+  var ENGINE_HEAD = 64;
+  var ENGINE_TAIL = 56;
+  var ENGINE_MARK = ' … ';
+  var MAX_ENGINE_CHARS = ENGINE_HEAD + ENGINE_MARK.length + ENGINE_TAIL;
+
+  function elideEngine(msg) {
+    if (msg.length <= MAX_ENGINE_CHARS) return msg;
+    return msg.slice(0, ENGINE_HEAD) + ENGINE_MARK + msg.slice(msg.length - ENGINE_TAIL);
   }
 
   function showError(msg) {
